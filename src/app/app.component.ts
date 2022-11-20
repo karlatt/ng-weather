@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
-import {SwPush, SwUpdate} from '@angular/service-worker';
-import {interval} from 'rxjs';
-import {HttpClient} from '@angular/common/http';
+import { CountryService } from "./data/services/country.service";
+
 
 @Component({
   selector: 'app-root',
@@ -10,7 +9,8 @@ import {HttpClient} from '@angular/common/http';
 })
 export class AppComponent {
 
-    constructor() {
-
+    constructor(countryService:CountryService) {
+      //do some reference data init (no need for APP_INITIALER, this one shot http get and we can afford to wait the data)
+countryService.initialize();
     }
 }
