@@ -74,6 +74,7 @@ export class GatewayService implements OnDestroy {
     actionOnNext: () => void = null
   ) {
     const storeKey = GatewayService.getStoreKey(zip, countryZip);
+    if (!storeKey) return;
     let isInitialCall = true;
     let evaluateCondition = () => isInitialCall || this.store.hasKey(storeKey);
 
@@ -107,10 +108,10 @@ export class GatewayService implements OnDestroy {
       });
   }
   static getStoreKey(zip: string, countryZip: string): string {
-    return zip.trim().concat(GatewayService.CONCAT_CHAR, countryZip.trim());
+    return zip?.trim().concat(GatewayService.CONCAT_CHAR, countryZip?.trim());
   }
 
   static getZipInfoFromKey(key: string): Array<string> {
-    return key.split(GatewayService.CONCAT_CHAR);
+    return key?.split(GatewayService.CONCAT_CHAR);
   }
 }
