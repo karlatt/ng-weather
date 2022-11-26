@@ -1,6 +1,6 @@
 import { BrowserModule } from "@angular/platform-browser";
 import { NgModule } from "@angular/core";
-import { FormsModule } from "@angular/forms";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 import { AppComponent } from "./app.component";
 import { ZipcodeEntryComponent } from "./components/zipcode-entry/zipcode-entry.component";
@@ -18,18 +18,25 @@ import {
   LocalStorageProviderDefaultService,
 } from "./core/services/storage";
 import { GatewayService } from "./data";
+import { StateButtonComponent } from "./components/state-button/state-button.component";
+import { SelectionHiLightPipe } from "./shared";
+import { SelectionTextInputComponent } from "./components/selection-text-input/selection-text-input.component";
 
 @NgModule({
   declarations: [
     AppComponent,
     ZipcodeEntryComponent,
+    StateButtonComponent,
     ForecastsListComponent,
     CurrentConditionsComponent,
     MainPageComponent,
+    SelectionTextInputComponent,
+    SelectionHiLightPipe
   ],
   imports: [
     BrowserModule,
     FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     RouterModule,
     routing,

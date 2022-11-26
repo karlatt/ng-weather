@@ -1,8 +1,38 @@
 <div class="well">
-  <h2>Enter a zipcode:</h2>
-  <input type="text" #zipcode placeholder="Zipcode" class="form-control">
-  <br>
-  <button class="btn btn-primary" (click)="addLocation(zipcode.value)" >
-    Add location
-  </button>
+  <h2>Please enter zipCode and select country</h2>
+  <br />
+  <form class="form-inline" [formGroup]="zeForm">
+    <input
+      type="text"
+      formControlName="zipCode"
+      placeholder="ZipCode"
+      class="form-control mr-3"
+    />
+    <app-selection-text-input
+      class="mr-3"
+      internalInputClass="form-control mr-3 p-8"
+      placeholder="Country"
+      formControlName="countryZip"
+      itemLabel="name"
+      itemPropertyValue="code"
+      [itemsList]="(countriesDataSource$ | async) ?? []"
+      (applyFilter)="applyFilter($event)"
+    ></app-selection-text-input>
+    <app-state-button
+      [initialTemplate]="init"
+      [loadingTemplate]="loading"
+      [completeTemplate]="complete"
+      [initialClass]="'btn btn-primary'"
+      [loadingClass]="'btn btn-info'"
+      [completeClass]="'btn btn-success'"
+      [loading]="buttonLoading"
+      [disabled]="!zeForm.valid"
+      [reinitAfter]="500"
+      (clicked)="actionClicked()"
+    >
+    </app-state-button>
+  </form>
 </div>
+<ng-template #init>Add location</ng-template>
+<ng-template #loading>Adding...</ng-template>
+<ng-template #complete>&check;&nbsp;&nbsp;Done</ng-template>

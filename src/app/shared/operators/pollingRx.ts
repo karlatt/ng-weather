@@ -12,7 +12,7 @@ function attemptsGuardFactory(maxAttempts: number) {
 export function pollWhile<T>(
   startAfter: number,
   pollInterval: number,
-  keepPollingActive: (res: T) => boolean,
+  keepPollingActive: () => boolean,
   maxAttempts = Infinity,
   emitOnlyLast = false
 ): MonoTypeOperatorFunction<T> {
@@ -20,8 +20,9 @@ export function pollWhile<T>(
     const poll$ = timer(startAfter, pollInterval).pipe(
       scan(attempts => ++attempts, 0), //accumulated counter
       tap(attemptsGuardFactory(maxAttempts)), //check
+      takeWhile(keepPollingActive, false),
       switchMapTo(source$), // do the call
-      takeWhile(keepPollingActive, true) // check condition so we don't need to unsubscribe
+  // check condition so we don't need to unsubscribe
     );
 
     return emitOnlyLast ? poll$.pipe(last()) : poll$;

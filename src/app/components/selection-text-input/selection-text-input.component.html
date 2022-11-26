@@ -1,0 +1,19 @@
+<div class="container">
+  <input
+    [class]="internalInputClass"
+    [placeholder]="placeholder"
+    [value]="internalInputValue"
+    (blur)="onBlur()"
+    (focus)="onFocus()"
+    (input)="onInput($event)"
+  />
+  <div class="list" *ngIf="showList">
+    <ul>
+      <li
+        *ngFor="let item of itemsList"
+        (mousedown)="selectValue(item)"
+        [innerHTML]="item | hightLightLabel: itemLabel:internalInputValue"
+      ></li>
+    </ul>
+  </div>
+</div>

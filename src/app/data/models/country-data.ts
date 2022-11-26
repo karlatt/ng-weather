@@ -1,5 +1,4 @@
-export interface CountryData{
-    name:string;
-    code:string;
-
+export interface CountryData {
+  name: string;
+  code: string;
 }

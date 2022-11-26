@@ -12,7 +12,9 @@ export interface WeatherData {
   id: number;
   name: string;
   cod: number;
+  //  because we need those and have them when doing the call , just create two optional props to get all information from dataObject
   zip?: string;
+  countryZip?:string;
 }
 
 export interface Clouds {
@@ -55,6 +57,10 @@ export interface Wind {
   deg: number;
   gust: number;
 }
+
+
+
+
 ////////////////FORECASTS/////////////////////
 export interface WeatherForecastData {
   city: City;

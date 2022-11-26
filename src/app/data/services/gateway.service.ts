@@ -1,5 +1,6 @@
 import { Injectable, OnDestroy } from "@angular/core";
-import { Observable } from "rxjs";
+import { Observable, of } from "rxjs";
+import { catchError, switchMapTo, tap } from "rxjs/operators";
 import { DataStoreService } from "../../core/services/data";
 import { LocalStorageService } from "../../core/services/storage";
 import { pollWhile } from "../../shared/operators/pollingRx";
@@ -16,12 +17,9 @@ export class GatewayService implements OnDestroy {
     private readonly store: DataStoreService
   ) {}
 
-  static readonly START_AFTER = 1000;
-
+  static readonly START_AFTER = 100;
   static readonly POLL_EVERY = 30000;
-
-  static readonly MAX_POL_NBR = 1000;
-
+  static readonly MAX_POL_NBR = 25; //for test so we don't reach limit
   static readonly CONCAT_CHAR = "/";
 
   ngOnDestroy(): void {
@@ -31,7 +29,7 @@ export class GatewayService implements OnDestroy {
   continuePolling = true;
 
   get trackedKey$(): Observable<Array<string>> {
-    //  zip codes concat cityCode
+    // key is zipCode concat countryCode
     return this.store.MapKey$;
   }
 
@@ -41,19 +39,26 @@ export class GatewayService implements OnDestroy {
   initializeFromSavedData(): void {
     this.store.initializeValues<WeatherData>(
       (zipAndCode) => this.fetchData(zipAndCode),
-      this.localStorage.getArrayOfItems<string>(),
-      true
+      this.localStorage.getArrayOfItems<string>()
     );
   }
 
-  addCity(locInfo: LocationInfo) {
-    const mapKey = GatewayService.getStoreKey(locInfo.zip, locInfo.zipCountry);
-    this.localStorage.addItemToArray(mapKey);
-    this.startPollingForCity(locInfo.zip, locInfo.zipCountry);
+  addCity(locInfo: LocationInfo, actionOnNext: () => void) {
+    const mapKey = GatewayService.getStoreKey(locInfo.zip, locInfo.countryZip);
+    if (!this.store.hasKey(mapKey)) {
+      this.localStorage.addItemToArray(mapKey);
+      this.startPollingForCity(locInfo.zip, locInfo.countryZip, actionOnNext);
+    }
+  }
+  getIcon(id: number) {
+    return this.weatherService.getWeatherIcon(id);
+  }
+  removeCity(locInfo: LocationInfo) {
+    const mapKey = GatewayService.getStoreKey(locInfo.zip, locInfo.countryZip);
+    this.removeFromKey(mapKey);
   }
 
-  removeCity(locInfo: LocationInfo) {
-    const mapKey = GatewayService.getStoreKey(locInfo.zip, locInfo.zipCountry);
+  private removeFromKey(mapKey: string) {
     this.localStorage.removeItemFromArray(mapKey);
     this.store.removeItem(mapKey);
   }
@@ -63,29 +68,46 @@ export class GatewayService implements OnDestroy {
     this.startPollingForCity(array[0], array[1]);
   }
 
-  startPollingForCity(zip: string, cityZip: string) {
-    const storeKey = GatewayService.getStoreKey(zip, cityZip);
-    let isInit = true;
+  startPollingForCity(
+    zip: string,
+    countryZip: string,
+    actionOnNext: () => void = null
+  ) {
+    const storeKey = GatewayService.getStoreKey(zip, countryZip);
+    let isInitialCall = true;
+    let evaluateCondition = () => isInitialCall || this.store.hasKey(storeKey);
+
     this.weatherService
-      .getCurrentConditions(zip, cityZip)
+      .getCurrentConditions(zip, countryZip)
       .pipe(
         pollWhile(
           GatewayService.START_AFTER,
           GatewayService.POLL_EVERY,
-          (_) => isInit || this.store.hasKey(storeKey),
-          GatewayService.MAX_POL_NBR //so we don't pollute the key everyone'use
-        )
+          evaluateCondition,
+          GatewayService.MAX_POL_NBR //so we don't rob the key everyone'use
+        ),
+        tap((data) => {
+          this.store.upsertItem(storeKey, {
+            ...data,
+            zip: zip,
+            countryZip: countryZip,
+          });
+          isInitialCall = false;
+        }),
+        catchError((err) => {
+          if (err.status === 404) return of(this.removeFromKey(storeKey));
+          return of(void 0);
+        }) // véry simple handling just to be sure we don't keep it in store and localStorage
       )
-      .subscribe((data) => {
-        this.store.upsertItem(GatewayService.getStoreKey(zip, cityZip), {
-          ...data,
-          zip: zip,
-        });
-        isInit = false;
+      .subscribe(() => {
+        if (actionOnNext !== null) {
+          actionOnNext();
+          actionOnNext = null;
+        }
       });
   }
-  static getStoreKey(zip: string, cityZip: string): string {
-    return zip.trim().concat(GatewayService.CONCAT_CHAR, cityZip.trim());
+  static getStoreKey(zip: string, countryZip: string): string {
+    return zip.trim().concat(GatewayService.CONCAT_CHAR, countryZip.trim());
   }
 
   static getZipInfoFromKey(key: string): Array<string> {

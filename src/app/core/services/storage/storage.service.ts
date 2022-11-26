@@ -70,7 +70,6 @@ export class LocalStorageService {
     const arrayFromStorage = this.getArrayOfItems<T>();
     const index = arrayFromStorage.indexOf(item);
     if (index >= 0) {
-      //  here
       this.setItem([
         ...arrayFromStorage.slice(0, index),
         ...arrayFromStorage.slice(index + 1),

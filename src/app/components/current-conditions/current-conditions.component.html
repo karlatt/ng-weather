@@ -2,7 +2,7 @@
   <div
     *ngFor="let location of CurrentConditions | async"
     class="well flex"
-    (click)="showForecast(location.zip)"
+    (click)="showForecast(location.zip,location.countryZip)"
   >
     <div>
       <h3>{{ location.name }} ({{ location.zip }})</h3>
@@ -14,16 +14,14 @@
         {{ location.main.temp_min | number: ".0-0" }}
       </p>
       <p>
-        <a [routerLink]="['/forecast', location.zip]"
+        <a [routerLink]="['/forecast', location.zip,location.countryZip]"
           >Show 5-day forecast for {{ location.name }}</a
         >
       </p>
     </div>
     <div>
-      <span class="close" (click)="gateway.removeCity(location.zip)"
-        >&times;</span
-      >
-      <img [src]="weatherService.getWeatherIcon(location.weather[0].id)" />
+      <span class="close" (click)="gateway.removeCity(location)">&times;</span>
+      <img [src]="gateway.getIcon(location.weather[0].id)" />
     </div>
   </div>
 </div>
